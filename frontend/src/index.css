@@ -404,7 +404,7 @@ tr:hover td {
   gap: 1.5rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 850px) {
   .terminal-layout {
     grid-template-columns: 1fr;
   }
@@ -903,6 +903,14 @@ tr:hover td {
   gap: 1rem;
   width: 100%;
 }
+@media (min-width: 480px) and (max-width: 767px) {
+  .enroll-fields-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .enroll-fields-grid input:last-child {
+    grid-column: span 2;
+  }
+}
 @media (min-width: 768px) {
   .enroll-fields-grid {
     grid-template-columns: 1.5fr 1.5fr 1fr;
@@ -916,14 +924,41 @@ tr:hover td {
   width: 100%;
   align-items: center;
 }
-@media (min-width: 480px) {
+@media (min-width: 480px) and (max-width: 767px) {
   .create-course-fields-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .create-course-fields-grid button {
+    grid-column: span 2;
   }
 }
 @media (min-width: 768px) {
   .create-course-fields-grid {
     grid-template-columns: 1fr 1.5fr 1fr 0.5fr auto;
+  }
+}
+
+/* Stat Grid Layout Overrides */
+.stat-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 1rem;
+  margin: 1.5rem 0 2.5rem;
+}
+@media (max-width: 850px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .stat-card-enrolled {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 480px) {
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .stat-card-enrolled {
+    grid-column: auto !important;
   }
 }
 
@@ -934,7 +969,7 @@ tr:hover td {
   flex-wrap: wrap;
   align-items: center;
 }
-@media (max-width: 650px) {
+@media (max-width: 800px) {
   .dashboard-controls {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -954,7 +989,7 @@ tr:hover td {
 }
 
 /* Mobile-responsive table card converter */
-@media (max-width: 650px) {
+@media (max-width: 800px) {
   .responsive-table,
   .responsive-table thead,
   .responsive-table tbody,
