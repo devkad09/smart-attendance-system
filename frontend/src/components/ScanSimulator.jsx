@@ -23,6 +23,7 @@ export default function ScanSimulator() {
   // QR Code scanner instance reference
   const qrScannerRef = useRef(null);
   const [qrScanActive, setQrScanActive] = useState(false);
+  const [usingMockCamera, setUsingMockCamera] = useState(false);
 
   useEffect(() => {
     // Load students and courses
@@ -46,6 +47,7 @@ export default function ScanSimulator() {
   }, []);
 
   const cleanupCameras = () => {
+    setUsingMockCamera(false);
     if (faceStreamRef.current) {
       faceStreamRef.current.getTracks().forEach(track => track.stop());
       faceStreamRef.current = null;
@@ -196,11 +198,13 @@ export default function ScanSimulator() {
           }
         );
         setQrScanActive(true);
+        setUsingMockCamera(false);
         setHudText("Scan QR Code");
       } catch (err) {
-        console.error("Camera init error: ", err);
-        setError("Failed to open camera. Make sure webcam is enabled and not in use.");
-        setHudText("Camera Error");
+        console.warn("Camera init failed, falling back to simulated QR sensor:", err);
+        setQrScanActive(true);
+        setUsingMockCamera(true);
+        setHudText("Simulated QR scanner ready");
       }
     }, 100);
   };
@@ -213,6 +217,7 @@ export default function ScanSimulator() {
       });
       faceStreamRef.current = stream;
       setFaceScanActive(true);
+      setUsingMockCamera(false);
       
       setTimeout(() => {
         if (videoRef.current) {
@@ -220,8 +225,10 @@ export default function ScanSimulator() {
         }
       }, 100);
     } catch (err) {
-      setError("Cannot access webcam. Face ID requires camera permissions.");
-      setHudText("Camera Error");
+      console.warn("Camera access failed, falling back to simulated face sensor:", err);
+      setFaceScanActive(true);
+      setUsingMockCamera(true);
+      setHudText("Simulated face sensor ready");
     }
   };
 
@@ -267,6 +274,35 @@ export default function ScanSimulator() {
         setBusy(false);
       }
     }, 3000);
+  };
+
+  const handleQrSimulationScan = async () => {
+    if (!selectedStudentId) {
+      setError("Select a student to scan.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setHudText("QR Detected. Logging...");
+    
+    setTimeout(async () => {
+      try {
+        const student = students.find(s => s.id === selectedStudentId);
+        if (!student) {
+          throw new Error("Student not found.");
+        }
+        const result = await api.simulateScan(student.id, selectedCourseId);
+        setLastResult(result);
+        setHudText("Verification Success");
+        playBeep(!result.message);
+      } catch (err) {
+        setError(err.message || "QR Code simulation failed.");
+        setHudText("Invalid ID");
+        playBeep(false);
+      } finally {
+        setBusy(false);
+      }
+    }, 1200);
   };
 
   const getActiveStudent = () => {
@@ -334,7 +370,15 @@ export default function ScanSimulator() {
 
             {activeMode === "qr" && (
               <div style={{ width: "100%", height: "100%", position: "relative" }}>
-                <div id="qr-reader" style={{ width: "100%", height: "100%" }}></div>
+                {usingMockCamera ? (
+                  <div className="mock-camera-feed" style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0c0f1d" }}>
+                    <div style={{ fontSize: "3.5rem", marginBottom: "0.25rem", animation: "pulse-cyan 2s infinite" }}>📷</div>
+                    <span style={{ fontSize: "0.75rem", color: "var(--secondary)", fontWeight: 500 }}>[ QR CAMERA SIMULATOR ACTIVE ]</span>
+                    <span className="muted" style={{ fontSize: "0.65rem", opacity: 0.7 }}>Physical camera offline or blocked</span>
+                  </div>
+                ) : (
+                  <div id="qr-reader" style={{ width: "100%", height: "100%" }}></div>
+                )}
                 {qrScanActive && (
                   <div className="scanner-overlay">
                     <div style={{ border: "2px solid var(--primary)", width: "230px", height: "230px", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", borderRadius: "12px", boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.55)" }}></div>
@@ -347,14 +391,22 @@ export default function ScanSimulator() {
             {activeMode === "face" && (
               <div style={{ width: "100%", height: "100%", position: "relative" }}>
                 {faceScanActive ? (
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="scanner-camera-feed"
-                    style={{ transform: "scaleX(-1)" }}
-                  />
+                  usingMockCamera ? (
+                    <div className="mock-camera-feed" style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0c0f1d" }}>
+                      <div style={{ fontSize: "3.5rem", marginBottom: "0.25rem", animation: "pulse-cyan 2s infinite" }}>👤</div>
+                      <span style={{ fontSize: "0.75rem", color: "var(--secondary)", fontWeight: 500 }}>[ FACE ID SIMULATOR ACTIVE ]</span>
+                      <span className="muted" style={{ fontSize: "0.65rem", opacity: 0.7 }}>Physical camera offline or blocked</span>
+                    </div>
+                  ) : (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="scanner-camera-feed"
+                      style={{ transform: "scaleX(-1)" }}
+                    />
+                  )
                 ) : (
                   <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Initializing face sensor...</div>
                 )}
@@ -478,9 +530,18 @@ export default function ScanSimulator() {
                 )}
                 
                 {activeMode === "qr" && (
-                  <div style={{ padding: "0.75rem", background: "rgba(6, 182, 212, 0.05)", borderRadius: "8px", border: "1px dashed rgba(6, 182, 212, 0.2)", fontSize: "0.85rem", textAlign: "center" }}>
-                    <p style={{ color: "var(--secondary)", fontWeight: 500, marginBottom: "0.25rem" }}>QR scan active for {getActiveCourse() ? getActiveCourse().code : "Session"}</p>
-                    <p className="muted">Show the student's enrollment QR card to the webcam to scan.</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <button 
+                      onClick={handleQrSimulationScan}
+                      disabled={busy}
+                      style={{ width: "100%", padding: "0.75rem", background: "linear-gradient(135deg, var(--primary), var(--primary-hover))" }}
+                    >
+                      {busy ? "Reading QR..." : "📷 Simulate QR Card Scan"}
+                    </button>
+                    <div style={{ padding: "0.75rem", background: "rgba(6, 182, 212, 0.05)", borderRadius: "8px", border: "1px dashed rgba(6, 182, 212, 0.2)", fontSize: "0.85rem", textAlign: "center" }}>
+                      <p style={{ color: "var(--secondary)", fontWeight: 500, marginBottom: "0.25rem" }}>QR scan active for {getActiveCourse() ? getActiveCourse().code : "Session"}</p>
+                      <p className="muted">Show the student's enrollment QR card to the webcam, or click the simulate button above.</p>
+                    </div>
                   </div>
                 )}
               </div>

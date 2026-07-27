@@ -118,6 +118,15 @@ export default function Students() {
     }
   };
 
+  const simulateFaceEnrollment = () => {
+    const initials = (form.name || "Student").split(" ").map(n => n[0] || "").join("").toUpperCase();
+    const colors = ["#ef4444", "#f97316", "#f59e0b", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#ec4899"];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle cx="50" cy="50" r="48" fill="${randomColor}"/><text x="50" y="55" font-family="'Outfit', sans-serif" font-size="38" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${initials || "S"}</text></svg>`;
+    const dataUrl = "data:image/svg+xml;base64," + btoa(svg);
+    setForm((prev) => ({ ...prev, facePhoto: dataUrl }));
+  };
+
   // QR Code display
   const showQrCode = async (student) => {
     try {
@@ -340,9 +349,19 @@ export default function Students() {
                 </button>
               </div>
             ) : (
-              <button type="button" className="secondary-btn" onClick={startCamera}>
-                📷 Capture Face ID
-              </button>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button type="button" className="secondary-btn" onClick={startCamera}>
+                  📷 Capture Face ID
+                </button>
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={simulateFaceEnrollment}
+                  style={{ borderColor: "var(--secondary)", color: "var(--secondary)" }}
+                >
+                  ⚡ Sim Face ID
+                </button>
+              </div>
             )}
           </div>
           
