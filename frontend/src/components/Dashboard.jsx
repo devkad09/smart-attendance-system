@@ -143,7 +143,7 @@ export default function Dashboard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "1.5rem" }}>
         <h2>ATU Lecture Dashboard</h2>
         
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+        <div className="dashboard-controls">
           
           {/* Course Session Filter */}
           <select
@@ -175,7 +175,7 @@ export default function Dashboard() {
             ⚙️ Cutoff Time
           </button>
 
-          <button className="secondary-btn" onClick={load} style={{ padding: "0.55rem" }}>
+          <button className="secondary-btn refresh-btn" onClick={load} style={{ padding: "0.55rem" }}>
             🔄
           </button>
         </div>
@@ -287,7 +287,7 @@ export default function Dashboard() {
         </p>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr>
                 <th>Profile</th>
@@ -306,7 +306,7 @@ export default function Dashboard() {
                 const schoolId = student ? student.studentId : "N/A";
                 return (
                   <tr key={r.id}>
-                    <td>
+                    <td data-label="Profile">
                       {facePhoto ? (
                         <img
                           src={facePhoto}
@@ -320,20 +320,20 @@ export default function Dashboard() {
                         </div>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Student">
                       <strong style={{ color: "#ffffff" }}>{r.studentName}</strong>
                     </td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>{schoolId}</td>
-                    <td>{r.className}</td>
-                    <td>
+                    <td data-label="Student ID" style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>{schoolId}</td>
+                    <td data-label="Class">{r.className}</td>
+                    <td data-label="Module">
                       <span className="badge" style={{ background: "rgba(6, 182, 212, 0.08)", color: "var(--secondary)", border: "1px solid rgba(6, 182, 212, 0.2)" }}>
                         {r.courseCode || "General"}
                       </span>
                     </td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>
+                    <td data-label="Scan Time" style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>
                       {new Date(r.timestamp).toLocaleTimeString()}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span className={`badge ${r.status === "late" ? "badge-late" : "badge-ontime"}`}>
                         {r.status}
                       </span>

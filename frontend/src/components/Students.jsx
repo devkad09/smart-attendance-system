@@ -263,24 +263,21 @@ export default function Students() {
 
       {/* Enrollment Form */}
       <form onSubmit={handleEnroll} style={{ display: "flex", flexDirection: "column", gap: "1rem", background: "rgba(17, 24, 39, 0.3)", padding: "1.25rem", borderRadius: "12px", border: "1px solid var(--border)", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", gap: "1rem", width: "100%", flexWrap: "wrap" }}>
+        <div className="enroll-fields-grid">
           <input
             placeholder="Full name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            style={{ flex: 1.5 }}
           />
           <input
             placeholder="Student ID (e.g. ATU-01240127C)"
             value={form.studentId}
             onChange={(e) => setForm({ ...form, studentId: e.target.value })}
-            style={{ flex: 1.5 }}
           />
           <input
             placeholder="Class (e.g. HND Computer Science 2)"
             value={form.className}
             onChange={(e) => setForm({ ...form, className: e.target.value })}
-            style={{ flex: 1 }}
           />
         </div>
 
@@ -363,7 +360,7 @@ export default function Students() {
         <p className="muted">No students enrolled yet. Set up courses and enroll a student!</p>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr>
                 <th>Profile</th>
@@ -377,7 +374,7 @@ export default function Students() {
             <tbody>
               {students.map((s) => (
                 <tr key={s.id}>
-                  <td>
+                  <td data-label="Profile">
                     {s.facePhoto ? (
                       <img
                         src={s.facePhoto}
@@ -390,7 +387,7 @@ export default function Students() {
                       </div>
                     )}
                   </td>
-                  <td>
+                  <td data-label="Name">
                     <button 
                       className="link-btn" 
                       onClick={() => openAnalytics(s)} 
@@ -400,9 +397,9 @@ export default function Students() {
                       {s.name}
                     </button>
                   </td>
-                  <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>{s.studentId}</td>
-                  <td>{s.className}</td>
-                  <td>
+                  <td data-label="Student ID" style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>{s.studentId}</td>
+                  <td data-label="Class">{s.className}</td>
+                  <td data-label="Modules">
                     <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", maxWidth: "240px" }}>
                       {(s.courseIds || []).length === 0 ? (
                         <span className="muted" style={{ fontSize: "0.75rem" }}>No courses</span>
@@ -429,7 +426,7 @@ export default function Students() {
                       )}
                     </div>
                   </td>
-                  <td style={{ textAlign: "right" }}>
+                  <td data-label="Actions" style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "0.75rem", alignItems: "center" }}>
                       <button className="secondary-btn" style={{ padding: "0.3rem 0.75rem", fontSize: "0.8rem" }} onClick={() => showQrCode(s)}>
                         🔍 QR Code
@@ -555,7 +552,7 @@ export default function Students() {
                 {/* Overall Attendance Metrics */}
                 <div>
                   <h4 style={{ color: "#ffffff", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>General Metrics</h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
+                  <div className="analytics-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
                     <div style={{ background: "rgba(0,0,0,0.2)", padding: "0.75rem", borderRadius: "8px", textAlign: "center", border: "1px solid var(--border)" }}>
                       <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--secondary)", fontFamily: "var(--font-mono)" }}>{report.rate}%</div>
                       <div className="muted" style={{ fontSize: "0.65rem", textTransform: "uppercase" }}>Attendance</div>

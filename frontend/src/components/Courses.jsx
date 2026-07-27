@@ -170,24 +170,21 @@ export default function Courses() {
 
       {/* Course Creation Form */}
       <form className="enroll-form" onSubmit={handleCreateCourse}>
-        <div style={{ display: "flex", gap: "1rem", width: "100%", flexWrap: "wrap", alignItems: "center" }}>
+        <div className="create-course-fields-grid">
           <input
             placeholder="Course Code (e.g. CSC 304)"
             value={form.code}
             onChange={(e) => setForm({ ...form, code: e.target.value })}
-            style={{ flex: 1 }}
           />
           <input
             placeholder="Course Title (e.g. Web Technology)"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            style={{ flex: 1.5 }}
           />
           <input
             placeholder="Department (e.g. Computer Science)"
             value={form.department}
             onChange={(e) => setForm({ ...form, department: e.target.value })}
-            style={{ flex: 1 }}
           />
           <input
             type="number"
@@ -196,7 +193,6 @@ export default function Courses() {
             placeholder="Credits"
             value={form.credits}
             onChange={(e) => setForm({ ...form, credits: e.target.value })}
-            style={{ flex: 0.5, minWidth: "80px" }}
           />
           <button type="submit" disabled={busy}>
             {busy ? "Registering..." : "➕ Add Course"}
@@ -212,7 +208,7 @@ export default function Courses() {
         <p className="muted">No courses registered in the system. Add one above to get started!</p>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr>
                 <th>Code</th>
@@ -225,15 +221,15 @@ export default function Courses() {
             <tbody>
               {courses.map((c) => (
                 <tr key={c.id}>
-                  <td>
+                  <td data-label="Code">
                     <strong style={{ color: "var(--secondary)", fontFamily: "var(--font-mono)", fontSize: "0.9rem" }}>{c.code}</strong>
                   </td>
-                  <td>
+                  <td data-label="Title">
                     <strong style={{ color: "#ffffff" }}>{c.title}</strong>
                   </td>
-                  <td>{c.department}</td>
-                  <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.9rem" }}>{c.credits}</td>
-                  <td style={{ textAlign: "right" }}>
+                  <td data-label="Department">{c.department}</td>
+                  <td data-label="Credits" style={{ fontFamily: "var(--font-mono)", fontSize: "0.9rem" }}>{c.credits}</td>
+                  <td data-label="Actions" style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "0.75rem", alignItems: "center" }}>
                       <button className="secondary-btn" style={{ padding: "0.3rem 0.75rem", fontSize: "0.8rem" }} onClick={() => openReport(c)}>
                         📊 Reports
@@ -296,7 +292,7 @@ export default function Courses() {
                   {reportData.studentsList.length === 0 ? (
                     <p className="muted" style={{ textAlign: "center", padding: "1.5rem 0" }}>No students registered in this course module.</p>
                   ) : (
-                    <table style={{ margin: 0, border: "none", borderRadius: "0", boxShadow: "none" }}>
+                    <table className="responsive-table" style={{ margin: 0, border: "none", borderRadius: "0", boxShadow: "none" }}>
                       <thead>
                         <tr style={{ background: "rgba(0,0,0,0.3)" }}>
                           <th style={{ padding: "0.5rem 0.75rem", fontSize: "0.75rem" }}>Student</th>
@@ -309,7 +305,7 @@ export default function Courses() {
                       <tbody>
                         {reportData.studentsList.map((s) => (
                           <tr key={s.id}>
-                            <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.85rem" }}>
+                            <td data-label="Student" style={{ padding: "0.5rem 0.75rem", fontSize: "0.85rem" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                 {s.facePhoto ? (
                                   <img 
@@ -323,12 +319,12 @@ export default function Courses() {
                                 <strong style={{ color: "#ffffff" }}>{s.name}</strong>
                               </div>
                             </td>
-                            <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem", fontFamily: "var(--font-mono)" }}>{s.studentId}</td>
-                            <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem" }}>{s.present}/{reportData.totalSessions}</td>
-                            <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem", fontWeight: 700, color: s.rate >= 75 ? "var(--primary)" : "var(--danger)" }}>
+                            <td data-label="School ID" style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem", fontFamily: "var(--font-mono)" }}>{s.studentId}</td>
+                            <td data-label="Attended" style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem" }}>{s.present}/{reportData.totalSessions}</td>
+                            <td data-label="Rate" style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem", fontWeight: 700, color: s.rate >= 75 ? "var(--primary)" : "var(--danger)" }}>
                               {s.rate}%
                             </td>
-                            <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem", textAlign: "right" }}>
+                            <td data-label="ATU Status" style={{ padding: "0.5rem 0.75rem", fontSize: "0.80rem", textAlign: "right" }}>
                               {s.isEligible ? (
                                 <span className="badge badge-ontime" style={{ fontSize: "0.65rem", padding: "0.1rem 0.35rem" }}>✓ Eligible</span>
                               ) : (
