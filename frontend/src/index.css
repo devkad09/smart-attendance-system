@@ -947,6 +947,67 @@ tr:hover td {
   gap: 1rem;
   margin: 1.5rem 0 2.5rem;
 }
+/* Mobile & Device Responsiveness Overhaul */
+@media (max-width: 768px) {
+  .app {
+    padding: 0 1rem 3rem;
+  }
+  
+  .app-header {
+    margin: 0 -1rem 1.5rem;
+    padding: 1.25rem 1rem;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+
+  .app-header h1 {
+    font-size: 1.4rem !important;
+  }
+
+  .subtitle {
+    font-size: 0.85rem !important;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+  }
+
+  /* Responsive Horizontal Navigation Bar */
+  .tabs {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding: 0.25rem !important;
+    gap: 0.35rem !important;
+    display: flex !important;
+  }
+  
+  .tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .tab {
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Touch Form Input adjustments */
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS */
+  }
+  
+  /* Scanner viewport adaptation */
+  .scanner-view-container {
+    aspect-ratio: 1/1 !important;
+  }
+}
+
 @media (max-width: 850px) {
   .stat-grid {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -1063,14 +1124,16 @@ tr:hover td {
 }
 
 /* Modals & Analytics grids adaptation */
-@media (max-width: 480px) {
+@media (max-width: 580px) {
   .analytics-stats-grid {
     grid-template-columns: 1fr !important;
   }
   .modal-content {
     padding: 1.25rem 1rem !important;
     gap: 1rem !important;
-    width: 95% !important;
+    width: 94% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
   }
   .scan-mode-btn {
     font-size: 0.75rem !important;
