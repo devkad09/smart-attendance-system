@@ -36,18 +36,25 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div>
-          <h1>Smart Biometric Attendance System</h1>
-          <p className="subtitle">Multimodal biometric verification (Fingerprint, Face ID, QR Scan) — pilot build</p>
-        </div>
-        {isAuthenticated && (
-          <div className="header-actions">
-            <span style={{ fontSize: "0.85rem", color: "var(--primary)", fontWeight: 500 }}>● Lecturer Session</span>
-            <button className="secondary-btn" onClick={handleLogout} style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}>
-              🔒 Lock Terminal
-            </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.2rem 0.6rem", background: "rgba(37, 99, 235, 0.15)", border: "1px solid rgba(37, 99, 235, 0.3)", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600", color: "#93c5fd", marginBottom: "0.4rem" }}>
+              <span>🏛️ ACCRA TECHNICAL UNIVERSITY</span>
+            </div>
+            <h1>Smart Biometric Attendance System</h1>
+            <p className="subtitle">Multimodal biometric verification (Fingerprint, Face ID, QR Scan) — pilot build</p>
           </div>
-        )}
+          {isAuthenticated && (
+            <div className="header-actions">
+              <span style={{ fontSize: "0.85rem", color: "#fde047", background: "rgba(245, 158, 11, 0.15)", padding: "0.3rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(245, 158, 11, 0.3)", fontWeight: 600 }}>
+                ● Lecturer Session Active
+              </span>
+              <button className="secondary-btn" onClick={handleLogout} style={{ padding: "0.45rem 0.9rem", fontSize: "0.8rem", borderRadius: "8px" }}>
+                🔒 Lock Terminal
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <nav className="tabs">
