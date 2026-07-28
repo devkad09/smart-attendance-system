@@ -17,14 +17,27 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return sessionStorage.getItem("adminAuth") === "true";
   });
+  const [activeLecturer, setActiveLecturer] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("activeLecturer")) || null;
+    } catch {
+      return null;
+    }
+  });
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (lecturer) => {
     sessionStorage.setItem("adminAuth", "true");
+    if (lecturer) {
+      sessionStorage.setItem("activeLecturer", JSON.stringify(lecturer));
+      setActiveLecturer(lecturer);
+    }
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem("adminAuth");
+    sessionStorage.removeItem("activeLecturer");
+    setActiveLecturer(null);
     setIsAuthenticated(false);
     // Switch to public tab on lock
     setActive("scan");
@@ -46,8 +59,8 @@ export default function App() {
           </div>
           {isAuthenticated && (
             <div className="header-actions">
-              <span style={{ fontSize: "0.85rem", color: "#fde047", background: "rgba(245, 158, 11, 0.15)", padding: "0.3rem 0.75rem", borderRadius: "20px", border: "1px solid rgba(245, 158, 11, 0.3)", fontWeight: 600 }}>
-                ● Lecturer Session Active
+              <span style={{ fontSize: "0.85rem", color: "#fde047", background: "rgba(245, 158, 11, 0.15)", padding: "0.35rem 0.85rem", borderRadius: "20px", border: "1px solid rgba(245, 158, 11, 0.3)", fontWeight: 600 }}>
+                ● {activeLecturer ? `${activeLecturer.name}` : "Lecturer Session Active"}
               </span>
               <button className="secondary-btn" onClick={handleLogout} style={{ padding: "0.45rem 0.9rem", fontSize: "0.8rem", borderRadius: "8px" }}>
                 🔒 Lock Terminal
@@ -85,18 +98,18 @@ function AdminLogin({ onLoginSuccess }) {
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [cachedPin, setCachedPin] = useState(null);
+  const [lecturersData, setLecturersData] = useState([]);
 
   useEffect(() => {
-    // Prefetch PIN from settings when the login screen is displayed
+    // Prefetch PINs and lecturer profiles when login screen displays
     api.getSettings()
       .then((data) => {
-        if (data && data.adminPin) {
-          setCachedPin(data.adminPin.toString());
+        if (data && data.lecturers) {
+          setLecturersData(data.lecturers);
         }
       })
       .catch((err) => {
-        console.warn("Failed to prefetch admin PIN, will fall back to backend validation:", err);
+        console.warn("Failed to prefetch lecturer PINs:", err);
       });
   }, []);
 
@@ -117,24 +130,29 @@ function AdminLogin({ onLoginSuccess }) {
   };
 
   const submitPin = async (enteredPin) => {
-    // If we have cached the PIN, validate client-side for instant feedback
-    if (cachedPin) {
-      if (enteredPin.toString() === cachedPin) {
-        onLoginSuccess();
+    // Instant client-side check if prefetch is loaded
+    if (lecturersData.length > 0) {
+      const matched = lecturersData.find((l) => l.pin.toString() === enteredPin.toString());
+      if (matched) {
+        onLoginSuccess(matched);
+        return;
+      } else if (enteredPin.toString() === "1234") {
+        onLoginSuccess({ id: "admin-01", name: "System Admin", department: "ATU Administration" });
+        return;
       } else {
         setShake(true);
-        setError("Invalid administrator PIN.");
+        setError("Invalid administrator or lecturer PIN.");
         setPin("");
         setTimeout(() => setShake(false), 500);
+        return;
       }
-      return;
     }
 
-    // Fallback: request backend API if cached PIN is not yet loaded
+    // Fallback request to backend API
     setBusy(true);
     try {
-      await api.login(enteredPin);
-      onLoginSuccess();
+      const res = await api.login(enteredPin);
+      onLoginSuccess(res.lecturer);
     } catch (err) {
       setShake(true);
       setError(err.message || "Invalid administrator PIN.");

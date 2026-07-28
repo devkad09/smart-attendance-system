@@ -52,8 +52,15 @@ const defaultCourses = [
   { id: "atu-eee301", code: "EEE 301", title: "Electrical Circuit Analysis", department: "Electrical Engineering", credits: 3 }
 ];
 
-if (db.get("courses").size().value() === 0) {
-  db.set("courses", defaultCourses).write();
+// Ensure lecturers collection exists and is seeded
+const defaultLecturers = [
+  { id: "lect-01", name: "Dr. K. Appiah", department: "Computer Science", pin: "1234" },
+  { id: "lect-02", name: "Prof. E. Mensah", department: "Electrical Engineering", pin: "5678" },
+  { id: "lect-03", name: "Dr. A. Osei", department: "Information Technology", pin: "4321" }
+];
+
+if (!db.has("lecturers").value() || db.get("lecturers").size().value() === 0) {
+  db.set("lecturers", defaultLecturers).write();
 }
 
 module.exports = db;

@@ -50,5 +50,13 @@ export const api = {
   login: (pin) =>
     request("/auth/login", { method: "POST", body: JSON.stringify({ pin }) }),
 
+  getLecturers: () => request("/auth/lecturers"),
+  createLecturer: (lecturer) =>
+    request("/auth/lecturers", { method: "POST", body: JSON.stringify(lecturer) }),
+  updateLecturerPin: (id, pin) =>
+    request(`/auth/lecturers/${id}/pin`, { method: "PUT", body: JSON.stringify({ pin }) }),
+  deleteLecturer: (id) =>
+    request(`/auth/lecturers/${id}`, { method: "DELETE" }),
+
   seedData: () => request("/auth/seed", { method: "POST" })
 };

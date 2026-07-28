@@ -15,13 +15,86 @@ export default function Dashboard() {
   // Course Filter selection (empty string = "All Courses")
   const [selectedCourseId, setSelectedCourseId] = useState("");
 
-  // Late Cutoff Settings states
+  // Late Cutoff Settings & Lecturer Management states
   const [showSettings, setShowSettings] = useState(false);
   const [cutoffHour, setCutoffHour] = useState(8);
   const [cutoffMinute, setCutoffMinute] = useState(0);
   const [settingsStatus, setSettingsStatus] = useState("");
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [seederBusy, setSeederBusy] = useState(false);
+
+  // Lecturer PIN Management states
+  const [lecturers, setLecturers] = useState([]);
+  const [newLecturerName, setNewLecturerName] = useState("");
+  const [newLecturerDept, setNewLecturerDept] = useState("Computer Science");
+  const [newLecturerPin, setNewLecturerPin] = useState("");
+  const [editingPinId, setEditingPinId] = useState(null);
+  const [editingPinVal, setEditingPinVal] = useState("");
+  const [lecturerMsg, setLecturerMsg] = useState("");
+
+  const loadLecturers = async () => {
+    try {
+      const data = await api.getLecturers();
+      setLecturers(data || []);
+    } catch (err) {
+      console.warn("Failed to load lecturers:", err);
+    }
+  };
+
+  const handleAddLecturer = async (e) => {
+    e.preventDefault();
+    if (!newLecturerName.trim() || !newLecturerPin.trim()) {
+      setLecturerMsg("✕ Name and 4-digit PIN are required");
+      return;
+    }
+    if (newLecturerPin.length !== 4 || isNaN(parseInt(newLecturerPin))) {
+      setLecturerMsg("✕ PIN must be exactly 4 numbers");
+      return;
+    }
+    try {
+      await api.createLecturer({
+        name: newLecturerName.trim(),
+        department: newLecturerDept.trim(),
+        pin: newLecturerPin.trim()
+      });
+      setLecturerMsg("✓ New lecturer account created successfully!");
+      setNewLecturerName("");
+      setNewLecturerPin("");
+      loadLecturers();
+      setTimeout(() => setLecturerMsg(""), 3000);
+    } catch (err) {
+      setLecturerMsg(`✕ ${err.message}`);
+    }
+  };
+
+  const handleSavePin = async (id) => {
+    if (!editingPinVal || editingPinVal.length !== 4 || isNaN(parseInt(editingPinVal))) {
+      setLecturerMsg("✕ PIN must be 4 numeric digits");
+      return;
+    }
+    try {
+      await api.updateLecturerPin(id, editingPinVal);
+      setLecturerMsg("✓ Lecturer PIN updated!");
+      setEditingPinId(null);
+      setEditingPinVal("");
+      loadLecturers();
+      setTimeout(() => setLecturerMsg(""), 3000);
+    } catch (err) {
+      setLecturerMsg(`✕ ${err.message}`);
+    }
+  };
+
+  const handleDeleteLecturer = async (id, name) => {
+    if (!window.confirm(`Delete lecturer profile for ${name}?`)) return;
+    try {
+      await api.deleteLecturer(id);
+      setLecturerMsg(`✓ Removed lecturer profile ${name}`);
+      loadLecturers();
+      setTimeout(() => setLecturerMsg(""), 3000);
+    } catch (err) {
+      setLecturerMsg(`✕ ${err.message}`);
+    }
+  };
 
   const handleSeedData = async () => {
     if (!window.confirm("Warning: Seeding demo data will reset the database, erasing all current student profiles and logs. Proceed?")) return;
@@ -172,7 +245,7 @@ export default function Dashboard() {
           </button>
 
           <button className="secondary-btn" onClick={() => setShowSettings(!showSettings)} title="Terminal Settings">
-            ⚙️ Cutoff Time
+            ⚙️ Cutoff & Lecturer PINs
           </button>
 
           <button className="secondary-btn refresh-btn" onClick={load} style={{ padding: "0.55rem" }}>
@@ -228,8 +301,130 @@ export default function Dashboard() {
             </div>
           </form>
 
+          {/* Lecturer PIN Directory & Accounts */}
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1.25rem", marginTop: "1.25rem" }}>
+            <h4 style={{ color: "#fde047", fontSize: "1rem", marginBottom: "0.35rem" }}>🔑 Lecturer Accounts & PIN Directory</h4>
+            <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
+              Each lecturer can log in using their personal 4-digit PIN. Add new staff members or update access passcodes below.
+            </p>
+
+            {lecturerMsg && (
+              <div style={{ marginBottom: "1rem", fontSize: "0.85rem", color: lecturerMsg.startsWith("✕") ? "var(--danger)" : "var(--primary)", fontWeight: 600 }}>
+                {lecturerMsg}
+              </div>
+            )}
+
+            {/* Existing Lecturers Table */}
+            <div style={{ overflowX: "auto", marginBottom: "1rem" }}>
+              <table className="attendance-table" style={{ fontSize: "0.85rem" }}>
+                <thead>
+                  <tr>
+                    <th>Lecturer Name</th>
+                    <th>Department</th>
+                    <th>Passcode PIN</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lecturers.map((l) => (
+                    <tr key={l.id}>
+                      <td style={{ fontWeight: 600 }}>{l.name}</td>
+                      <td>{l.department || "General Studies"}</td>
+                      <td>
+                        {editingPinId === l.id ? (
+                          <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
+                            <input
+                              type="password"
+                              maxLength={4}
+                              value={editingPinVal}
+                              onChange={(e) => setEditingPinVal(e.target.value)}
+                              placeholder="New PIN"
+                              style={{ width: "90px", padding: "0.2rem 0.5rem", fontSize: "0.8rem", textAlign: "center" }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSavePin(l.id)}
+                              style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", background: "var(--primary)" }}
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingPinId(null)}
+                              className="secondary-btn"
+                              style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem" }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ fontFamily: "var(--font-mono)", letterSpacing: "2px", color: "var(--secondary)" }}>
+                            •••• ({l.pin})
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: "0.4rem" }}>
+                          {editingPinId !== l.id && (
+                            <button
+                              type="button"
+                              className="secondary-btn"
+                              onClick={() => {
+                                setEditingPinId(l.id);
+                                setEditingPinVal(l.pin);
+                              }}
+                              style={{ padding: "0.25rem 0.6rem", fontSize: "0.75rem" }}
+                            >
+                              ✏️ Edit PIN
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteLecturer(l.id, l.name)}
+                            style={{ padding: "0.25rem 0.6rem", fontSize: "0.75rem", background: "rgba(239,68,68,0.2)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.4)" }}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Add New Lecturer Form */}
+            <form onSubmit={handleAddLecturer} style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap", background: "rgba(10, 16, 31, 0.4)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border)" }}>
+              <input
+                type="text"
+                placeholder="Lecturer Name (e.g. Dr. B. Danquah)"
+                value={newLecturerName}
+                onChange={(e) => setNewLecturerName(e.target.value)}
+                style={{ flex: 2, minWidth: "180px", padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
+              />
+              <input
+                type="text"
+                placeholder="Department"
+                value={newLecturerDept}
+                onChange={(e) => setNewLecturerDept(e.target.value)}
+                style={{ flex: 1, minWidth: "140px", padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
+              />
+              <input
+                type="password"
+                maxLength={4}
+                placeholder="4-digit PIN"
+                value={newLecturerPin}
+                onChange={(e) => setNewLecturerPin(e.target.value)}
+                style={{ width: "110px", padding: "0.4rem 0.75rem", fontSize: "0.85rem", textAlign: "center" }}
+              />
+              <button type="submit" style={{ padding: "0.45rem 1rem", fontSize: "0.85rem" }}>
+                ➕ Add Lecturer
+              </button>
+            </form>
+          </div>
+
           {/* Seed demo data row */}
-          <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem", marginTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem", marginTop: "1.25rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
             <div>
               <span className="muted" style={{ fontSize: "0.85rem" }}>Demo Testing: Populate simulated students & logs</span>
             </div>

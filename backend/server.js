@@ -22,8 +22,13 @@ app.use("/api/attendance", attendanceRouter);
 
 // GET /api/settings
 app.get("/api/settings", (req, res) => {
-  const settings = db.get("settings").value();
-  res.json(settings);
+  const settings = db.get("settings").value() || {};
+  const lecturers = db.get("lecturers").value() || [];
+  const validPins = lecturers.map(l => l.pin.toString());
+  if (settings.adminPin && !validPins.includes(settings.adminPin.toString())) {
+    validPins.push(settings.adminPin.toString());
+  }
+  res.json({ ...settings, validPins, lecturers });
 });
 
 // POST /api/settings
@@ -43,19 +48,112 @@ app.post("/api/settings", (req, res) => {
   res.json({ success: true, settings: updatedSettings });
 });
 
+// GET /api/auth/lecturers - List all lecturer profiles
+app.get("/api/auth/lecturers", (req, res) => {
+  const lecturers = db.get("lecturers").value() || [];
+  res.json(lecturers);
+});
+
+// POST /api/auth/lecturers - Add a new lecturer profile
+app.post("/api/auth/lecturers", (req, res) => {
+  const { v4: uuidv4 } = require("uuid");
+  const { name, department, pin } = req.body;
+
+  if (!name || !pin) {
+    return res.status(400).json({ error: "Name and 4-digit PIN are required" });
+  }
+  if (pin.toString().length !== 4 || isNaN(parseInt(pin))) {
+    return res.status(400).json({ error: "PIN must be exactly 4 digits" });
+  }
+
+  const existingPin = db.get("lecturers").find({ pin: pin.toString() }).value();
+  if (existingPin) {
+    return res.status(409).json({ error: "That PIN is already in use by another lecturer" });
+  }
+
+  const newLecturer = {
+    id: "lect-" + uuidv4().slice(0, 8),
+    name,
+    department: department || "General Studies",
+    pin: pin.toString()
+  };
+
+  db.get("lecturers").push(newLecturer).write();
+  res.status(201).json(newLecturer);
+});
+
+// PUT /api/auth/lecturers/:id/pin - Update lecturer PIN
+app.put("/api/auth/lecturers/:id/pin", (req, res) => {
+  const { pin } = req.body;
+  if (!pin || pin.toString().length !== 4 || isNaN(parseInt(pin))) {
+    return res.status(400).json({ error: "PIN must be exactly 4 numeric digits" });
+  }
+
+  const lecturer = db.get("lecturers").find({ id: req.params.id }).value();
+  if (!lecturer) {
+    return res.status(404).json({ error: "Lecturer profile not found" });
+  }
+
+  const existingPin = db.get("lecturers").find(l => l.pin === pin.toString() && l.id !== req.params.id).value();
+  if (existingPin) {
+    return res.status(409).json({ error: "That PIN is already used by another lecturer" });
+  }
+
+  db.get("lecturers").find({ id: req.params.id }).assign({ pin: pin.toString() }).write();
+  res.json({ success: true, message: `PIN updated for ${lecturer.name}` });
+});
+
+// DELETE /api/auth/lecturers/:id - Delete a lecturer profile
+app.delete("/api/auth/lecturers/:id", (req, res) => {
+  const lecturers = db.get("lecturers").value() || [];
+  if (lecturers.length <= 1) {
+    return res.status(400).json({ error: "Cannot delete the only remaining lecturer profile" });
+  }
+
+  const lecturer = db.get("lecturers").find({ id: req.params.id }).value();
+  if (!lecturer) {
+    return res.status(404).json({ error: "Lecturer profile not found" });
+  }
+
+  db.get("lecturers").remove({ id: req.params.id }).write();
+  res.json({ success: true, message: `Lecturer profile ${lecturer.name} removed` });
+});
+
 // POST /api/auth/login
 app.post("/api/auth/login", (req, res) => {
   const { pin } = req.body;
-  if (pin === undefined) {
+  if (pin === undefined || pin === null) {
     return res.status(400).json({ error: "PIN is required" });
   }
-  const settings = db.get("settings").value();
-  const storedPin = settings ? settings.adminPin : "1234";
-  if (pin.toString() === storedPin.toString()) {
-    res.json({ success: true, message: "Authentication successful" });
-  } else {
-    res.status(401).json({ error: "Invalid administrator PIN" });
+
+  const reqPinStr = pin.toString().trim();
+  const lecturers = db.get("lecturers").value() || [];
+  const matchedLecturer = lecturers.find(l => l.pin.toString() === reqPinStr);
+
+  if (matchedLecturer) {
+    return res.json({
+      success: true,
+      message: `Authenticated as ${matchedLecturer.name}`,
+      lecturer: {
+        id: matchedLecturer.id,
+        name: matchedLecturer.name,
+        department: matchedLecturer.department
+      }
+    });
   }
+
+  // Fallback to legacy/global adminPin check
+  const settings = db.get("settings").value();
+  const storedPin = settings ? (settings.adminPin || "1234") : "1234";
+  if (reqPinStr === storedPin.toString()) {
+    return res.json({
+      success: true,
+      message: "Authenticated as System Administrator",
+      lecturer: { id: "admin-01", name: "Lecturer / Administrator", department: "ATU Administration" }
+    });
+  }
+
+  res.status(401).json({ error: "Invalid administrator or lecturer PIN" });
 });
 
 // POST /api/auth/seed - Reset and seed database with mock ATU data
