@@ -37,8 +37,10 @@ app.post("/api/settings", (req, res) => {
   if (isNaN(hour) || hour < 0 || hour > 23 || isNaN(minute) || minute < 0 || minute > 59) {
     return res.status(400).json({ error: "Invalid cutoff time value" });
   }
-  db.set("settings", { cutoffHour: hour, cutoffMinute: minute }).write();
-  res.json({ success: true, settings: { cutoffHour: hour, cutoffMinute: minute } });
+  const currentSettings = db.get("settings").value() || {};
+  const updatedSettings = { ...currentSettings, cutoffHour: hour, cutoffMinute: minute };
+  db.set("settings", updatedSettings).write();
+  res.json({ success: true, settings: updatedSettings });
 });
 
 // POST /api/auth/login

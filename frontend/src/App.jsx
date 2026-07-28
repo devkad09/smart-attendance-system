@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dashboard from "./components/Dashboard.jsx";
 import Students from "./components/Students.jsx";
 import Courses from "./components/Courses.jsx";
@@ -78,6 +78,20 @@ function AdminLogin({ onLoginSuccess }) {
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [cachedPin, setCachedPin] = useState(null);
+
+  useEffect(() => {
+    // Prefetch PIN from settings when the login screen is displayed
+    api.getSettings()
+      .then((data) => {
+        if (data && data.adminPin) {
+          setCachedPin(data.adminPin.toString());
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to prefetch admin PIN, will fall back to backend validation:", err);
+      });
+  }, []);
 
   const handleKeyPress = (num) => {
     setError("");
@@ -96,6 +110,20 @@ function AdminLogin({ onLoginSuccess }) {
   };
 
   const submitPin = async (enteredPin) => {
+    // If we have cached the PIN, validate client-side for instant feedback
+    if (cachedPin) {
+      if (enteredPin.toString() === cachedPin) {
+        onLoginSuccess();
+      } else {
+        setShake(true);
+        setError("Invalid administrator PIN.");
+        setPin("");
+        setTimeout(() => setShake(false), 500);
+      }
+      return;
+    }
+
+    // Fallback: request backend API if cached PIN is not yet loaded
     setBusy(true);
     try {
       await api.login(enteredPin);
